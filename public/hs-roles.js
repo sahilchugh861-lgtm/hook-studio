@@ -7,9 +7,10 @@ const shotOf = it => !!(it && it.shotAt);
 /* ---------- shot tick next to every hook (admin board) ---------- */
 function itemHead(kind, i, K) {
   const code = `<span class="code">${K.p}${i.n}</span>`;
-  if (kind !== 'hooks') return code;
-  return `<span class="itemhead"><input type="checkbox" class="tick" data-chg="hook-shot" data-id="${esc(i.id)}" ${i.shotAt ? 'checked' : ''} aria-label="Hook ${i.n} has been shot" title="Tick when this hook has been shot">${code}</span>`;
+  return `<span class="itemhead"><input type="checkbox" class="tick" data-chg="hook-shot" data-kind="${kind}" data-id="${esc(i.id)}" ${i.shotAt ? 'checked' : ''} aria-label="${K.one} ${K.p}${i.n} has been shot" title="Tick when this ${K.one.toLowerCase()} has been shot">${code}</span>`;
 }
+const KINDS3 = ['hooks', 'bodies', 'ctas'];
+const allOf = id => KINDS3.flatMap(k => itemsOf(k, id).map(i => ({ ...i, kind: k })));
 
 /* ---------- Hooks tab for client and editor ---------- */
 function hooksView(r) {
@@ -17,33 +18,35 @@ function hooksView(r) {
   const angles = cid ? anglesOf(cid) : campaigns().flatMap(c => anglesOf(c.id));
   const canTick = r === 'client' || r === 'admin';
   let total = 0, shot = 0;
-  const blocks = angles.map(a => {
-    const hs = itemsOf('hooks', a.id), bs = itemsOf('bodies', a.id), cs = itemsOf('ctas', a.id);
-    if (!hs.length) return '';
-    const done = hs.filter(shotOf).length;
-    total += hs.length; shot += done;
-    const t = typeOf(a.type);
-    return `<div class="panel">
-      <div class="bench-h"><span class="chip" style="--h:${t.h}">${esc(t.label)}</span>
-        <h2 style="flex:1 1 220px">${esc(a.name)}</h2>
-        <span class="mono muted">${done}/${hs.length} shot</span>
-        ${canTick ? `<button class="btn sm" data-act="hooks-all" data-id="${esc(a.id)}" data-on="${done === hs.length ? 0 : 1}">${done === hs.length ? 'Untick all' : 'Tick all as shot'}</button>` : ''}</div>
-      ${a.why ? `<p class="why">${esc(a.why)}</p>` : ''}
-      <div class="rows">${hs.map(h => `<div class="hookrow ${h.shotAt ? 'shot' : ''}">
-        <input type="checkbox" class="tick" id="hk-${esc(h.id)}" data-chg="hook-shot" data-id="${esc(h.id)}" ${h.shotAt ? 'checked' : ''} ${canTick ? '' : 'disabled'} aria-label="Hook ${h.n} has been shot">
-        <span class="code">H${h.n}</span>
-        <div class="htext"><p>${esc(h.text)}</p>${h.shotAt ? `<span class="pill s-ok">Shot</span>` : ''}</div></div>`).join('')}</div>
-      ${bs.length || cs.length ? `<details class="scriptbox hookscript" data-key="${esc('hs:' + a.id)}" ${S.ui.open.has('hs:' + a.id) ? 'open' : ''}>
-        <summary class="label">Body and CTA used with these hooks (${bs.length} + ${cs.length})</summary>
-        <div class="script">${bs.map(b => `<div class="sline"><span class="label">Body B${b.n}</span><p>${esc(b.text)}</p></div>`).join('')}
-        ${cs.map(c => `<div class="sline"><span class="label">CTA C${c.n}</span><p>${esc(c.text)}</p></div>`).join('')}</div></details>` : ''}
-    </div>`;
-  }).join('');
+  const line = (x, isShot) => { const K = KIND[x.kind]; return `<div class="hookrow ${isShot ? 'shot' : ''}">
+        <input type="checkbox" class="tick" id="hk-${esc(x.id)}" data-chg="hook-shot" data-kind="${x.kind}" data-id="${esc(x.id)}" ${isShot ? 'checked' : ''} ${canTick ? '' : 'disabled'} aria-label="${K.one} ${K.p}${x.n} has been shot">
+        <span class="code">${K.p}${x.n}</span>
+        <div class="htext"><span class="label">${K.one}</span><p>${esc(x.text)}</p></div></div>`; };
+  const info = angles.map(a => {
+    const all = allOf(a.id); total += all.length; const sh = all.filter(shotOf); shot += sh.length;
+    return { a, all, sh, todo: all.filter(x => !shotOf(x)) };
+  }).filter(o => o.all.length);
+  const head = (o, n, label) => { const t = typeOf(o.a.type); return `<div class="bench-h"><span class="chip" style="--h:${t.h}">${esc(t.label)}</span>
+        <h2 style="flex:1 1 220px">${esc(o.a.name)}</h2><span class="mono muted">${n} ${label}</span>`; };
+  const todoBlocks = info.filter(o => o.todo.length).map(o => `<div class="panel">
+      ${head(o, o.todo.length, 'to shoot')}
+        ${canTick ? `<button class="btn sm" data-act="hooks-all" data-id="${esc(o.a.id)}" data-on="1">Tick all as shot</button>` : ''}</div>
+      ${o.a.why ? `<p class="why">${esc(o.a.why)}</p>` : ''}
+      <div class="rows">${o.todo.map(x => line(x, false)).join('')}</div></div>`).join('');
+  const shotBlocks = info.filter(o => o.sh.length).map(o => `<div class="panel">
+      ${head(o, o.sh.length, 'shot')}
+        ${canTick ? `<button class="btn sm ghost" data-act="hooks-all" data-id="${esc(o.a.id)}" data-on="0">Untick all</button>` : ''}</div>
+      <div class="rows">${o.sh.map(x => line(x, true)).join('')}</div></div>`).join('');
   const pct = total ? Math.round(shot / total * 100) : 0;
-  const intro = canTick ? 'Tick a hook once it has been shot. The admin and editors see it straight away.' : 'These are the hooks of your angles. A tick means the client has confirmed the hook is shot.';
+  const intro = canTick ? 'Tick a hook, body or CTA once it has been shot. It moves to the Shot section below. The admin and editors see it straight away.' : 'These are the hooks, bodies and CTAs of your angles. Once the client confirms something is shot, it moves to the Shot section.';
+  const none = `<div class="empty"><h2>No hooks yet</h2><p>${r === 'editor' ? 'Hooks show up here once the admin gives you an angle or videos to edit.' : 'When the team adds hooks for your campaign, they appear here.'}</p></div>`;
   return `<div class="page-h"><div><h1>Hooks</h1><p>${intro}</p></div></div>
-    ${total ? `<div class="panel" style="padding:14px 16px;display:grid;gap:8px"><div class="ctrls"><b>${shot} of ${total} hooks shot</b><span class="muted mono">${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>` : ''}
-    <div class="stack" style="margin-top:16px">${blocks || `<div class="empty"><h2>No hooks yet</h2><p>${r === 'editor' ? 'Hooks show up here once the admin gives you an angle or videos to edit.' : 'When the team adds hooks for your campaign, they appear here.'}</p></div>`}</div>`;
+    ${total ? `<div class="panel" style="padding:14px 16px;display:grid;gap:8px"><div class="ctrls"><b>${shot} of ${total} shot</b><span class="muted mono">${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>` : ''}
+    ${total ? `<div class="stack" style="margin-top:16px">
+      <div class="sec-h"><h2>To shoot</h2><span class="mono muted">${total - shot}</span></div>
+      ${todoBlocks || `<div class="empty"><p>Everything has been shot.</p></div>`}
+      <div class="sec-h" style="margin-top:12px"><h2>Shot ✓</h2><span class="mono muted">${shot}</span></div>
+      ${shotBlocks || `<div class="empty"><p>Nothing shot yet. Ticked items land here.</p></div>`}</div>` : `<div class="stack" style="margin-top:16px">${none}</div>`}`;
 }
 
 /* ---------- bulk assign on the Production tab ---------- */
@@ -112,7 +115,7 @@ function teamView() {
 function rolesChange(a, el) {
   const d = el.dataset;
   if (a === 'hook-shot') {
-    const it = S.col.hooks[d.id]; if (!it) return true;
+    const it = (S.col[d.kind] || S.col.hooks)[d.id]; if (!it) return true;
     const on = el.checked;
     M(() => { it.shotAt = on ? now() : 0; }, () => api('hook-shot', { ids: [it.id], shot: on }), on ? 'Marked as shot.' : 'Unmarked.');
     return true;
@@ -126,9 +129,9 @@ function rolesChange(a, el) {
 function rolesClick(a, t) {
   const d = t.dataset;
   if (a === 'hooks-all') {
-    const on = d.on === '1', hs = itemsOf('hooks', d.id).filter(h => shotOf(h) !== on);
+    const on = d.on === '1', hs = allOf(d.id).filter(h => shotOf(h) !== on).map(h => (S.col[h.kind] || {})[h.id]).filter(Boolean);
     if (!hs.length) return true;
-    M(() => hs.forEach(h => { h.shotAt = on ? now() : 0; }), () => api('hook-shot', { ids: hs.map(h => h.id), shot: on }), on ? 'All hooks marked as shot.' : 'Ticks removed.');
+    M(() => hs.forEach(h => { h.shotAt = on ? now() : 0; }), () => api('hook-shot', { ids: hs.map(h => h.id), shot: on }), on ? 'All marked as shot.' : 'Ticks removed.');
     return true;
   }
   if (a === 'bulk-all') { const b = bulk(); shownProd().forEach(x => b.sel.add(x.key)); render(); return true; }

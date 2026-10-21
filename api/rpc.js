@@ -247,13 +247,13 @@ async function route(req, res, b) {
   /* hook shot tick: the client (or admin) marks which hooks have been shot */
   if (a === 'hook-shot') {
     const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).map(x => String(x || '')).filter(Boolean).slice(0, 300);
-    if (!ids.length) fail(400, 'bad', 'Pick a hook first.');
+    if (!ids.length) fail(400, 'bad', 'Pick something first.');
     const on = !!b.shot; let n = 0;
     for (const id of ids) {
-      const it = (await q("select id, workspace_id from items where id = $1 and kind = 'hooks'", [id]))[0];
+      const it = (await q("select id, workspace_id from items where id = $1", [id]))[0];
       if (!it) continue;
       const role = await roleIn(u, it.workspace_id);
-      if (role !== 'admin' && role !== 'client') fail(403, 'forbidden', 'Only the client or the admin can mark a hook as shot.');
+      if (role !== 'admin' && role !== 'client') fail(403, 'forbidden', 'Only the client or the admin can mark this as shot.');
       await q('update items set shot_at = $1, shot_by = $2 where id = $3', [on ? now() : null, on ? u.id : null, it.id]);
       n++;
     }

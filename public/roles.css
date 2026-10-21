@@ -10,3 +10,6 @@
 .vchecks{display:flex;gap:8px;align-items:flex-start}
 .vsel{width:18px;height:18px;margin:8px 0 0;accent-color:var(--brand);cursor:pointer;flex:none}
 @media (max-width:620px){.hookrow{grid-template-columns:auto minmax(0,1fr)}.hookrow .code{display:none}}
+.shotbox{border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;display:grid;gap:8px}
+.shotbox>summary{cursor:pointer}
+.shotbox .item{opacity:.75}

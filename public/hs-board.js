@@ -141,11 +141,13 @@ function angleBench(a){
   const done = cb.filter(x => isDone(statusOf(x))).length;
   const part = kind => {
     const list = itemsOf(kind, a.id), K = KIND[kind];
-    return `<div class="part"><div class="part-h"><h3>${K.many}</h3>${kind === 'hooks' && window.AI ? window.AI.moreButton(a.id) : ''}<span class="label">${list.length}</span></div>
-      <div class="items">${list.map(i => `<div class="item">${itemHead(kind, i, K)}
+    const todo = list.filter(i => !i.shotAt), shotList = list.filter(i => i.shotAt);
+    const row = i => `<div class="item">${itemHead(kind, i, K)}
         <textarea class="field flat" id="it-${esc(i.id)}" data-blur="item" data-kind="${kind}" data-id="${esc(i.id)}" rows="${kind==='bodies'?4:2}" aria-label="${K.one} ${K.p}${i.n}">${esc(i.text)}</textarea>
-        <button class="btn sm ghost ${S.ui.armed==='item:'+i.id?'danger armed':''}" data-act="del-item" data-id="${esc(i.id)}" title="Delete ${K.one}">${S.ui.armed==='item:'+i.id?'Confirm':'✕'}</button></div>`).join('')
-        || `<p class="muted">${kind==='hooks' ? 'No hooks yet.' : `Add a ${K.one.toLowerCase()} to turn hooks into videos.`}</p>`}</div>
+        <button class="btn sm ghost ${S.ui.armed==='item:'+i.id?'danger armed':''}" data-act="del-item" data-id="${esc(i.id)}" title="Delete ${K.one}">${S.ui.armed==='item:'+i.id?'Confirm':'✕'}</button></div>`;
+    return `<div class="part"><div class="part-h"><h3>${K.many}</h3>${kind === 'hooks' && window.AI ? window.AI.moreButton(a.id) : ''}<span class="label">${list.length}</span></div>
+      <div class="items">${todo.map(row).join('')}${shotList.length ? `<details class="shotbox" data-key="${esc('sh:' + kind + a.id)}" ${S.ui.open.has('sh:' + kind + a.id) ? 'open' : ''}><summary class="label">Shot ✓ (${shotList.length})</summary>${shotList.map(row).join('')}</details>` : ''}
+        ${list.length ? '' : `<p class="muted">${kind==='hooks' ? 'No hooks yet.' : `Add a ${K.one.toLowerCase()} to turn hooks into videos.`}</p>`}</div>
       <div class="adder"><textarea class="field" id="add-${kind}" data-model="add.${kind}" rows="${kind==='bodies'?3:2}" placeholder="${kind==='hooks' ? 'Paste hooks, one per line' : `Paste a ${K.one.toLowerCase()}`}">${esc(S.ui.add[kind])}</textarea>
       <button class="btn sm" data-act="add-items" data-kind="${kind}" ${pb('add-items' + kind)}>Add ${kind==='hooks' ? 'hooks' : K.one.toLowerCase()}</button></div></div>`;
   };
