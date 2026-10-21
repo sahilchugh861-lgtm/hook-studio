@@ -1,0 +1,85 @@
+/* OccultPreneur brand theme — loaded after style.css.
+   Black command bar (like the lp attention bar) + electric green reserved for action and progress.
+   Green fills always carry near-black text: white on #00D23B fails contrast. */
+:root{
+  --bg:#f3f6f4; --surface:#ffffff; --surface-2:#f7faf8; --sunk:#e8eeea; --ink:#0c110e; --muted:#56635a; --line:#d9e2dc;
+  --brand:#00d23b; --brand-ink:#04160a; --brand-text:#0a8a32; --brand-soft:#cfffde;
+  --mari:#e09200; --mari-soft:#fff1d1;
+  --ok:#0a8a32; --ok-soft:#dcf7e5; --warn:#8a5000; --warn-soft:#fff1d1; --bad:#c62828; --bad-soft:#fde5e5; --info:#1e5ec4; --info-soft:#e2ecfc;
+  --chip-l:93%; --chip-fg:27%;
+  --shadow:0 1px 2px rgb(8 20 12 / .05), 0 8px 24px rgb(8 20 12 / .06);
+  --bar:#000000; --bar-2:#111612; --bar-line:#232b26; --bar-ink:#ffffff; --bar-muted:#86c59b;
+  --f-display:"Montserrat","Open Sans",system-ui,sans-serif;
+  --f-body:"Open Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#060807; --surface:#0e1210; --surface-2:#131915; --sunk:#0a0e0b; --ink:#e8f1eb; --muted:#8c9c92; --line:#1d2621;
+  --brand:#19e05a; --brand-ink:#03120a; --brand-text:#45e97f; --brand-soft:#0f2c1a;
+  --mari:#f5b544; --mari-soft:#33270f;
+  --ok:#45e97f; --ok-soft:#0f2c1a; --warn:#f5b544; --warn-soft:#33270f; --bad:#ff7a7a; --bad-soft:#3a1717; --info:#7fb0ff; --info-soft:#14223d;
+  --chip-l:20%; --chip-fg:80%; --shadow:0 1px 2px rgb(0 0 0 / .5);
+  --bar:#000000; --bar-2:#0f1411; --bar-line:#1d2621; --bar-ink:#ffffff; --bar-muted:#86c59b; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#060807; --surface:#0e1210; --surface-2:#131915; --sunk:#0a0e0b; --ink:#e8f1eb; --muted:#8c9c92; --line:#1d2621;
+  --brand:#19e05a; --brand-ink:#03120a; --brand-text:#45e97f; --brand-soft:#0f2c1a;
+  --mari:#f5b544; --mari-soft:#33270f;
+  --ok:#45e97f; --ok-soft:#0f2c1a; --warn:#f5b544; --warn-soft:#33270f; --bad:#ff7a7a; --bad-soft:#3a1717; --info:#7fb0ff; --info-soft:#14223d;
+  --chip-l:20%; --chip-fg:80%; --shadow:0 1px 2px rgb(0 0 0 / .5);
+  --bar:#000000; --bar-2:#0f1411; --bar-line:#1d2621; --bar-ink:#ffffff; --bar-muted:#86c59b; color-scheme:dark }
+
+/* type */
+h1,h2,h3{font-weight:800;letter-spacing:-.02em}
+.page-h h1{font-size:1.7rem;line-height:1.15}
+.label{font-family:var(--f-display);letter-spacing:.09em}
+a{color:var(--brand-text)}
+:focus-visible{outline-color:var(--brand)}
+
+/* buttons: green fill, near-black text, Montserrat like the lp CTA */
+.btn{font-family:var(--f-display);font-weight:700;border-radius:6px}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);box-shadow:0 1px 0 rgb(0 0 0 / .08), 0 4px 14px color-mix(in srgb,var(--brand) 30%,transparent)}
+.btn.primary:hover{filter:none;background:color-mix(in srgb,var(--brand) 88%,#000)}
+.btn.ok{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.ok:hover{background:color-mix(in srgb,var(--brand) 88%,#000)}
+
+/* black command bar */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bar)}
+.top{background:var(--bar);border-bottom:1px solid var(--bar-line);color:var(--bar-ink)}
+.top .ws{color:var(--bar-ink)}
+.top .sub{color:var(--bar-muted)}
+.mark{background:var(--brand);color:#000;font-family:var(--f-display);font-weight:800;border-radius:7px}
+.top .field{background:var(--bar-2);border-color:var(--bar-line);color:var(--bar-ink)}
+.top .field:hover{border-color:#3a4a40}
+.top .btn.ghost{color:var(--bar-muted)}
+.top .btn.ghost:hover{color:var(--bar-ink);background:rgb(255 255 255 / .06)}
+.tab{color:#b4c0b8;font-family:var(--f-display);font-weight:700;font-size:.86rem;position:relative}
+.tab:hover{color:#fff;background:rgb(255 255 255 / .06)}
+.tab[aria-current="page"]{color:#fff;background:rgb(0 210 59 / .14)}
+.tab[aria-current="page"]::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;border-radius:2px;background:var(--brand)}
+.userchip{color:#b4c0b8}
+
+/* board accents */
+.folder[aria-current="true"]{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand), 0 6px 18px color-mix(in srgb,var(--brand) 14%,transparent)}
+.formula .eq{color:var(--brand-text)}
+.bar>i,.minibar .bar>i{background:var(--brand)}
+.tick:checked{background:var(--brand);border-color:var(--brand)}
+.tick:checked::after{border-color:#000}
+.tick:hover{border-color:var(--brand)}
+.tile.hl{border-color:var(--brand);background:linear-gradient(180deg,color-mix(in srgb,var(--brand-soft) 60%,var(--surface)),var(--surface))}
+.slot.has{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.slot-steps li::marker{color:var(--brand-text)}
+.tc{background:var(--brand-soft);color:var(--brand-text)}
+.rtag.r-admin{background:var(--brand-soft);color:var(--brand-text)}
+.s-ok{background:var(--brand-soft);color:var(--brand-text)}
+.note{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--brand)}
+.empty{border-color:color-mix(in srgb,var(--brand) 35%,var(--line))}
+
+/* login / gate: echo the lp hero — black band on top of the card */
+.top img.mark{width:36px;height:auto;background:none;border-radius:0;display:block;flex:none}
+.gate-card{padding:0 0 26px;overflow:hidden;gap:14px;border-color:var(--line)}
+.gate-card>*{margin-inline:26px}
+.gate-card>h1{margin-top:10px}
+.gate-card::before{content:"";display:block;height:64px;margin:0;background:#000 url("/wordmark.jpg?v=4") no-repeat 26px center / auto 24px;border-bottom:2px solid var(--brand)}
+.gate-card::after{content:"HOOK STUDIO";position:absolute;top:24px;right:26px;font-family:var(--f-display);font-weight:800;font-size:.68rem;letter-spacing:.16em;color:var(--bar-muted)}
+.gate-card{position:relative}
+@media (max-width:420px){.gate-card::after{display:none}}
