@@ -244,6 +244,22 @@ async function route(req, res, b) {
     return { ok: true };
   }
 
+  /* hook shot tick: the client (or admin) marks which hooks have been shot */
+  if (a === 'hook-shot') {
+    const ids = (Array.isArray(b.ids) ? b.ids : [b.id]).map(x => String(x || '')).filter(Boolean).slice(0, 300);
+    if (!ids.length) fail(400, 'bad', 'Pick a hook first.');
+    const on = !!b.shot; let n = 0;
+    for (const id of ids) {
+      const it = (await q("select id, workspace_id from items where id = $1 and kind = 'hooks'", [id]))[0];
+      if (!it) continue;
+      const role = await roleIn(u, it.workspace_id);
+      if (role !== 'admin' && role !== 'client') fail(403, 'forbidden', 'Only the client or the admin can mark a hook as shot.');
+      await q('update items set shot_at = $1, shot_by = $2 where id = $3', [on ? now() : null, on ? u.id : null, it.id]);
+      n++;
+    }
+    return { ok: true, updated: n };
+  }
+
   /* everything below is admin only */
   needAdmin(u);
 
@@ -318,6 +334,24 @@ async function route(req, res, b) {
     case 'items-add': {
       const ang = await one('angles', String(b.angleId || ''));
       return { added: await addItems(ang, String(b.kind), b.texts) };
+    }
+    case 'video-bulk': {
+      const keys = [...new Set((Array.isArray(b.keys) ? b.keys : []).map(k => String(k || '')).filter(Boolean))].slice(0, 500);
+      if (!keys.length) fail(400, 'bad', 'Select at least one video first.');
+      const e = b.editorId ? String(b.editorId) : null;
+      let done = 0;
+      for (let i = 0; i < keys.length; i += 10) {
+        await Promise.all(keys.slice(i, i + 10).map(async key => {
+          const x = await resolveVideo(key);
+          if (e) { const m = await q("select 1 from memberships where user_id = $1 and workspace_id = $2 and role = 'editor'", [e, x.ws]); if (!m.length) fail(400, 'bad', 'That editor is not part of this workspace.'); }
+          await q(`insert into videos(key, workspace_id, campaign_id, angle_id, hook_id, body_id, cta_id, editor_id, status, drive_link, editor_note, client_note, updated_at, updated_by)
+                   values($1,$2,$3,$4,$5,$6,$7,$8,'todo','','','',$9,$10)
+                   on conflict (key) do update set editor_id=$8, updated_at=$9, updated_by=$10`,
+            [x.key, x.ws, x.angle.campaign_id, x.angle.id, x.h.id, x.b.id, x.c.id, e, now(), u.id]);
+          done++;
+        }));
+      }
+      return { ok: true, updated: done };
     }
     case 'item-update': {
       const it = await one('items', String(b.id || ''));
